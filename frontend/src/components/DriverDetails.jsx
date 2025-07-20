@@ -17,12 +17,12 @@ const DriverDetails = (props) => {
                 <div className='flex p-3 mt-8 bg-gray-100 rounded-xl justify-center gap-5 items-start md:gap-8'>
                     <div className='text-center'>
                         <i className="text-3xl mb-2 font-thin ri-timer-2-line md:text-4xl"></i>
-                        <h5 className='text-lg font-medium md:text-xl'>{props.driverStats.totalTime.toFixed(2)}</h5>
+                        <h5 className='text-lg font-medium md:text-xl'>{props.driverStats.totalTime}</h5>
                         <p className='text-sm text-gray-600 md:text-base'>Hours Online</p>
                     </div>
                     <div className='text-center'>
                         <i className="text-3xl mb-2 font-thin ri-speed-up-line md:text-4xl"></i>
-                        <h5 className='text-lg font-medium md:text-xl'>{props.driverStats.totalDistance.toFixed(2)} KM</h5>
+                        <h5 className='text-lg font-medium md:text-xl'>{props.driverStats.totalDistance} KM</h5>
                         <p className='text-sm text-gray-600 md:text-base'>Distance Travelled</p>
                     </div>
                     <div className='text-center'>
