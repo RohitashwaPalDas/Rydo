@@ -152,7 +152,8 @@ const createRide = async (req, res) => {
 
         const distanceTime = await fetchDistanceAndTime(pickup, destination);
         const fare = await getFare(pickup, destination);
-        console.log(fare);
+        const duration = parseFloat((distanceTime.duration.value / 3600).toFixed(2));
+        const distance = parseFloat((distanceTime.distance.value / 1000).toFixed(2));
         const newRide = new rideModel({
             user,
             pickup,
@@ -160,8 +161,8 @@ const createRide = async (req, res) => {
             fare: fare[vehicleType],
             otp: getOtp(6),
             paymentMethod: "razorpay",
-            duration: distanceTime.duration.value/3600,
-            distance: distanceTime.distance.value/1000,
+            duration,
+            distance
         })
         console.log(newRide);
         const ride = await newRide.save();
@@ -341,33 +342,33 @@ const endRide = async (req, res) => {
 }
 
 const paymentRazorpay = async (req, res) => {
-  try {
-    const { rideId } = req.body;
+    try {
+        const { rideId } = req.body;
 
-    const ride = await rideModel.findById(rideId);
-    if (!ride) {
-      return res.status(404).json({ success: false, message: "Ride not found" });
-    }
+        const ride = await rideModel.findById(rideId);
+        if (!ride) {
+            return res.status(404).json({ success: false, message: "Ride not found" });
+        }
 
-    const options = {
-      amount: ride.fare * 100, // Razorpay accepts amount in paise
-      currency: "INR",
-      receipt: ride._id.toString()
-    };
+        const options = {
+            amount: ride.fare * 100, // Razorpay accepts amount in paise
+            currency: "INR",
+            receipt: ride._id.toString()
+        };
 
-    razorpay_instance.orders.create(options, (error, order) => {
-      if (error) {
+        razorpay_instance.orders.create(options, (error, order) => {
+            if (error) {
+                console.log(error);
+                return res.json({ success: false, message: error.message });
+            }
+
+            res.json({ success: true, order });
+        });
+
+    } catch (error) {
         console.log(error);
-        return res.json({ success: false, message: error.message });
-      }
-
-      res.json({ success: true, order });
-    });
-
-  } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
-  }
+        res.json({ success: false, message: error.message });
+    }
 };
 
 
@@ -375,49 +376,49 @@ const paymentRazorpay = async (req, res) => {
 
 
 const verifyRazorPay = async (req, res) => {
-  try {
-    const { razorpay_order_id } = req.body;
+    try {
+        const { razorpay_order_id } = req.body;
 
-    // Fetch order info from Razorpay
-    const orderInfo = await razorpay_instance.orders.fetch(razorpay_order_id);
+        // Fetch order info from Razorpay
+        const orderInfo = await razorpay_instance.orders.fetch(razorpay_order_id);
 
-    if (orderInfo.status === "paid") {
-      const updatedRide = await rideModel.findByIdAndUpdate(
-        orderInfo.receipt,
-        { payment: true },
-        { new: true }
-      ).populate("user driver");
+        if (orderInfo.status === "paid") {
+            const updatedRide = await rideModel.findByIdAndUpdate(
+                orderInfo.receipt,
+                { payment: true },
+                { new: true }
+            ).populate("user driver");
 
-      console.log("Updated Ride:", updatedRide);
+            console.log("Updated Ride:", updatedRide);
 
-      // Notify the driver via socket
-      const driver = updatedRide?.driver;
-      const user = updatedRide?.user;
+            // Notify the driver via socket
+            const driver = updatedRide?.driver;
+            const user = updatedRide?.user;
 
-      console.log("/////////DRIVER AND USER INFO/////////");
-      console.log(driver, user);
+            console.log("/////////DRIVER AND USER INFO/////////");
+            console.log(driver, user);
 
-      if (driver?.socketId) {
-        sendMessageToSocketId(driver.socketId, {
-          event: "payment-success",
-          data: {
-            success: true,
-            rideId: updatedRide._id,
-            message: `Payment received from ${user?.fullname?.firstname || "user"}`,
-            fare: updatedRide.fare,
-            paymentMethod: updatedRide.paymentMethod,
-          },
-        });
-      }
+            if (driver?.socketId) {
+                sendMessageToSocketId(driver.socketId, {
+                    event: "payment-success",
+                    data: {
+                        success: true,
+                        rideId: updatedRide._id,
+                        message: `Payment received from ${user?.fullname?.firstname || "user"}`,
+                        fare: updatedRide.fare,
+                        paymentMethod: updatedRide.paymentMethod,
+                    },
+                });
+            }
 
-      return res.json({ success: true, message: "Payment Successful" });
-    } else {
-      return res.json({ success: false, message: "Payment Failed" });
+            return res.json({ success: true, message: "Payment Successful" });
+        } else {
+            return res.json({ success: false, message: "Payment Failed" });
+        }
+    } catch (error) {
+        console.error("🔴 Payment verification error:", error);
+        return res.json({ success: false, message: error.message });
     }
-  } catch (error) {
-    console.error("🔴 Payment verification error:", error);
-    return res.json({ success: false, message: error.message });
-  }
 };
 
 
