@@ -9,7 +9,6 @@ import { DriverDataContext } from "../contexts/DriverContext";
 import { SocketContext } from "../contexts/SocketContext";
 import axios from "axios";
 import LiveLocationMap from "../components/LiveTracking";
-import { set } from "mongoose";
 
 const DriverHome = () => {
   const [ridePopupPanel, setRidePopupPanel] = useState(false);
