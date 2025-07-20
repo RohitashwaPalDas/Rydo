@@ -130,7 +130,7 @@ const DriverHome = () => {
       </div>
 
       <div className="h-2/5 p-6 z-10 bg-white">
-        <DriverDetails driverStats={driverStats} />
+        <DriverDetails driverStats={driverStats} driver={driver}/>
       </div>
 
       <div

@@ -7,7 +7,7 @@ const DriverDetails = (props) => {
                 <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
                         <img className='h-10 w-10 rounded-full object-cover md:h-12 md:w-12' src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdlMd7stpWUCmjpfRjUsQ72xSWikidbgaI1w&s" alt="" />
-                        <h4 className='text-xl font-bold capitalize md:text-2xl'>Sam Das</h4>
+                        <h4 className='text-xl font-bold capitalize md:text-2xl'>{props.driver.fullname.firstname}</h4>
                     </div>
                     <div>
                         <h4 className='text-xl font-semibold md:text-2xl'>₹{props.driverStats.totalEarnings}</h4>
