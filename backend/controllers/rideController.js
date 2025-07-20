@@ -150,6 +150,7 @@ const createRide = async (req, res) => {
             res.status(400).json({ success: false, message: 'All fields are required' });
         }
 
+        const distanceTime = await fetchDistanceAndTime(pickup, destination);
         const fare = await getFare(pickup, destination);
         console.log(fare);
         const newRide = new rideModel({
@@ -159,6 +160,8 @@ const createRide = async (req, res) => {
             fare: fare[vehicleType],
             otp: getOtp(6),
             paymentMethod: "razorpay",
+            duration: distanceTime.duration.value/3600,
+            distance: distanceTime.distance.value/1000,
         })
         console.log(newRide);
         const ride = await newRide.save();

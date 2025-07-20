@@ -37,7 +37,7 @@ const DriverHome = () => {
       setDriverStats(res.data.message);
     } catch (err) {
       console.log(err);
-      setDriverStats({ totalRides: 0, totalEarnings: 0 });
+      setDriverStats({ totalRides: 0, totalEarnings: 0, totalTime: 0, totalDistance: 0 });
     }
   };
 

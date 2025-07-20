@@ -31,7 +31,7 @@ const rideSchema = new mongoose.Schema({
 
     duration: {
         type: Number,
-    }, // in seconds
+    }, 
 
     distance: {
         type: Number,

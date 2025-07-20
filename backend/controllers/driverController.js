@@ -147,17 +147,19 @@ async function getDriverStats(req,res) {
                 $group: {
                     _id: '$driver',
                     totalRides: { $sum: 1 },
-                    totalEarnings: { $sum: '$fare' }
+                    totalEarnings: { $sum: '$fare' },
+                    totalTime: { $sum: '$duration' },
+                    totalDistance: { $sum: '$distance' }
                 }
             }
         ]);
 
         if (result.length === 0) {
-            return res.status(200).json({success:true, message:{ totalRides: 0, totalEarnings: 0 }});
+            return res.status(200).json({success:true, message:{ totalRides: 0, totalEarnings: 0, totalTime: 0, totalDistance: 0 }});
         }
 
-        const { totalRides, totalEarnings } = result[0];
-        res.status(200).json({success:true, message:{ totalRides, totalEarnings }});
+        const { totalRides, totalEarnings, totalTime, totalDistance } = result[0];
+        res.status(200).json({success:true, message:{ totalRides, totalEarnings, totalTime, totalDistance }});
     } catch (err) {
         console.error('Error calculating stats:', err);
         return null;
