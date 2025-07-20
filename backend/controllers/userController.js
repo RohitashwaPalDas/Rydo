@@ -17,7 +17,7 @@ const registerUser = async (req, res) => {
 
         const { fullname, email, password } = req.body;
 
-        if(!fullname.firstname || !email || !password){
+        if (!fullname.firstname || !email || !password) {
             return res.status(400).json({ success: false, message: 'All fields are required' });
         }
 
@@ -85,11 +85,18 @@ const getUser = async (req, res) => {
 
 const logOutUser = async (req, res, next) => {
     try {
+        const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(400).json({ success: false, message: 'Token missing' });
+        }
+
+        await blackListTokenModel.updateOne(
+            { token },
+            { $set: { token } },
+            { upsert: true }
+        );
+
         res.clearCookie('token');
-        const token = req.cookies.token || req.headers.authorization.split(' ')[1];
-
-        await blackListTokenModel.create({ token });
-
         res.status(200).json({ success: true, message: 'Logged out' });
     } catch (error) {
         console.log(error);

@@ -1,26 +1,13 @@
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import "dotenv/config";
-import connectDB from "./config/connectDb.js";
-import userRouter from "./routes/userRoute.js";
-import driverRouter from "./routes/driverRoute.js";
+import http from "http";
+import app from "./app.js";
+import { initializeSocket } from "./socket.js";
 
-const app = express();
 const port = process.env.PORT || 4000;
 
-app.use(express.json());
-app.use(cors());
-app.use(cookieParser());
-connectDB();
+const server = http.createServer(app);
 
-app.use("/api/user", userRouter);
-app.use("/api/driver", driverRouter);
+initializeSocket(server);
 
-app.get('/', (req,res)=>{
-    res.send("API working");
-});
-
-app.listen(port, ()=>{
-    console.log("Listening to port" + port)
+server.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });

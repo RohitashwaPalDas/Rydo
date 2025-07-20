@@ -1,7 +1,7 @@
 import express from 'express';
 import {body} from "express-validator"
 import {authDriver} from "../middlewares/auth.js";
-import { getDriver, logInDriver, logOutDriver, registerDriver } from '../controllers/driverController.js';
+import { getDriver, getDriverStats, logInDriver, logOutDriver, registerDriver } from '../controllers/driverController.js';
 
 const driverRouter = express.Router();
 
@@ -18,5 +18,6 @@ driverRouter.post("/register", [
 driverRouter.post("/login", logInDriver);
 driverRouter.get("/get-driver", authDriver, getDriver);
 driverRouter.post("/logout", authDriver, logOutDriver);
+driverRouter.get("/driverdetails", authDriver, getDriverStats);
 
 export default driverRouter;

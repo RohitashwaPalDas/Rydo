@@ -3,31 +3,41 @@ import jwt from "jsonwebtoken";
 import driverModel from "../models/driverModel.js";
 import blackListTokenModel from "../models/blackListTokenModel.js";
 import { validationResult } from 'express-validator';
+import rideModel from "../models/rideModel.js";
+import mongoose from "mongoose";
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 }
 
-const registerDriver = async(req,res)=>{
+const registerDriver = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ success: false, message: "Some error occurred", errors: errors.array() });
+            return res.status(400).json({ success: false, message: "Validation failed", errors: errors.array() });
         }
 
         const { fullname, email, password, vehicle } = req.body;
 
-        if(!fullname.firstname || !email || !password || !vehicle.color || !vehicle.capacity || !vehicle.plate || !vehicle.vehicleType){
+        if (
+            !fullname?.firstname ||
+            !email ||
+            !password ||
+            !vehicle?.color ||
+            !vehicle?.plate ||
+            !vehicle?.capacity ||
+            !vehicle?.vehicleType
+        ) {
             return res.status(400).json({ success: false, message: 'All fields are required' });
         }
 
         const exists = await driverModel.findOne({ email });
         if (exists) {
-            return res.status(400).json({ success: false, message: 'Driver already exist' });
+            return res.status(400).json({ success: false, message: 'Driver already exists' });
         }
 
         if (password.length < 8) {
-            return res.status(400).json({ success: false, message: "Please enter a strong password" });
+            return res.status(400).json({ success: false, message: "Password must be at least 8 characters long" });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -36,16 +46,20 @@ const registerDriver = async(req,res)=>{
         const newDriver = new driverModel({
             fullname: {
                 firstname: fullname.firstname,
-                lastname: fullname.lastname
+                lastname: fullname.lastname || ''
             },
             email,
             password: hashedPassword,
             vehicle: {
-            color: vehicle.color,
-            plate: vehicle.plate,
-            capacity: vehicle.capacity,
-            vehicleType: vehicle.vehicleType
-        },
+                color: vehicle.color,
+                plate: vehicle.plate,
+                capacity: vehicle.capacity,
+                vehicleType: vehicle.vehicleType
+            },
+            location: {
+                type: 'Point',
+                coordinates: [0, 0] 
+            },
             date: Date.now()
         });
 
@@ -53,12 +67,18 @@ const registerDriver = async(req,res)=>{
 
         const token = generateToken(driver._id);
 
-        res.status(201).json({ success: true, message: "registered Successfully", token });
+        res.status(201).json({
+            success: true,
+            message: "Registered successfully",
+            token
+        });
+
     } catch (error) {
-        console.log(error);
-        res.status(400).json({ success: false, message: error.message });
+        console.error('Driver Registration Error:', error);
+        res.status(500).json({ success: false, message: error.message });
     }
-}
+};
+
 
 const logInDriver = async(req,res)=>{
     try {
@@ -91,11 +111,18 @@ const getDriver = async(req,res)=>{
 
 const logOutDriver = async(req,res)=>{
     try {
+        const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(400).json({ success: false, message: 'Token missing' });
+        }
+
+        await blackListTokenModel.updateOne(
+            { token },
+            { $set: { token } },
+            { upsert: true }
+        );
+
         res.clearCookie('token');
-        const token = req.cookies.token || req.headers.authorization.split(' ')[1];
-
-        await blackListTokenModel.create({ token });
-
         res.status(200).json({ success: true, message: 'Logged out' });
     } catch (error) {
         console.log(error);
@@ -103,4 +130,38 @@ const logOutDriver = async(req,res)=>{
     }
 }
 
-export {registerDriver, logInDriver, getDriver, logOutDriver};
+async function getDriverStats(req,res) {
+
+    try {
+        const {driverId} = req.query;
+        console.log('Driver ID:', driverId); 
+        const result = await rideModel.aggregate([
+            {
+                $match: {
+                    driver: new mongoose.Types.ObjectId(driverId),
+                    status: 'completed',
+                    payment: true
+                }
+            },
+            {
+                $group: {
+                    _id: '$driver',
+                    totalRides: { $sum: 1 },
+                    totalEarnings: { $sum: '$fare' }
+                }
+            }
+        ]);
+
+        if (result.length === 0) {
+            return res.status(200).json({success:true, message:{ totalRides: 0, totalEarnings: 0 }});
+        }
+
+        const { totalRides, totalEarnings } = result[0];
+        res.status(200).json({success:true, message:{ totalRides, totalEarnings }});
+    } catch (err) {
+        console.error('Error calculating stats:', err);
+        return null;
+    }
+}
+
+export {registerDriver, logInDriver, getDriver, logOutDriver, getDriverStats};

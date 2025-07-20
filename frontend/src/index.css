@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&family=Outfit:wght@100..900&family=Prata&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*{
+    font-family: Outfit;
+}
+
+html,
+body {
+  overflow: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
+}
+
+
+
+.prata-regular {
+  font-family: "Prata", serif;
+  font-style: normal;
+}
+
+::-webkit-scrollbar{
+  display: none;
+}
